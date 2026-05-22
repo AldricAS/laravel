@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LaravelMC - Minecraft Bedrock Server</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #FF2D20;
+            --primary-dim: rgba(255,45,32,0.15);
+            --dark-bg: #0e0e0e;
+            --card-bg: #161616;
+            --card-border: #252525;
+            --text: #f0f0f0;
+            --text-secondary: #888;
+            --wa-color: #25D366;
+            --online: #2ecc71;
+            --offline: #e74c3c;
+            --mono: 'Space Mono', monospace;
+            --sans: 'Syne', sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--dark-bg);
+            color: var(--text);
+            font-family: var(--sans);
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Background grid */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: 
+                linear-gradient(rgba(255,45,32,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,45,32,0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ── HERO ── */
+        .hero {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 60px 20px 40px;
+        }
+
+        .logo-wrap {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .logo-ring {
+            position: absolute;
+            inset: -18px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,45,32,0.2);
+            animation: spin 12s linear infinite;
+        }
+
+        .logo-ring::before {
+            content: '';
+            position: absolute;
+            top: -4px; left: 50%;
+            transform: translateX(-50%);
+            width: 8px; height: 8px;
+            background: var(--primary);
+            border-radius: 50%;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .logo {
+            width: 110px; height: 110px;
+            object-fit: contain;
+            filter: drop-shadow(0 0 24px rgba(255,45,32,0.6));
+            animation: float 4s ease-in-out infinite;
+            display: block;
+        }
+
+        @keyframes float {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .hero h1 {
+            font-size: clamp(2.2rem, 7vw, 3.8rem);
+            font-weight: 800;
+            letter-spacing: -1px;
+            line-height: 1;
+            margin-bottom: 10px;
+        }
+
+        .hero h1 span { color: var(--primary); }
+
+        .tagline {
+            font-family: var(--mono);
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-bottom: 16px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .version-badge {
+            background: var(--primary);
+            color: #fff;
+            padding: 5px 14px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            font-family: var(--mono);
+            letter-spacing: 1px;
+            margin-bottom: 32px;
+            display: inline-block;
+        }
+
+        /* ── MAIN GRID ── */
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 16px 60px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+
+        @media (min-width: 640px) {
+            .container { grid-template-columns: 1fr 1fr; }
+            .card-full { grid-column: 1 / -1; }
+        }
+
+        /* ── CARD ── */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            padding: 22px;
+            position: relative;
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+
+        .card:hover { border-color: rgba(255,45,32,0.35); }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .card:hover::before { opacity: 1; }
+
+        .card-title {
+            font-size: 0.75rem;
+            font-family: var(--mono);
+            color: var(--primary);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* ── STATUS CARD ── */
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .status-dot {
+            width: 14px; height: 14px;
+            border-radius: 50%;
+            background: var(--text-secondary);
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .status-dot.online {
+            background: var(--online);
+            box-shadow: 0 0 12px var(--online);
+        }
+
+        .status-dot.online::after {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            border: 2px solid var(--online);
+            animation: pulse 1.5s ease-out infinite;
+            opacity: 0;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.8; transform: scale(0.8); }
+            100% { opacity: 0; transform: scale(1.8); }
+        }
+
+        .status-dot.offline { background: var(--offline); }
+        .status-dot.checking { background: #f39c12; animation: blink 1s ease-in-out infinite; }
+
+        @keyframes blink { 50% { opacity: 0.3; } }
+
+        .status-text {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .status-text.online { color: var(--online); }
+        .status-text.offline { color: var(--offline); }
+        .status-text.checking { color: #f39c12; }
+
+        .status-sub {
+            font-family: var(--mono);
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .btn-refresh {
+            background: transparent;
+            border: 1px solid var(--card-border);
+            color: var(--text-secondary);
+            padding: 7px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-family: var(--mono);
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 12px;
+        }
+
+        .btn-refresh:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-refresh.spinning i { animation: spin 0.8s linear infinite; }
+
+        /* ── SERVER INFO ── */
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .info-row:last-child { border-bottom: none; }
+
+        .info-label {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-label i { color: var(--primary); width: 14px; }
+
+        .info-value {
+            font-family: var(--mono);
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text);
+            text-align: right;
+        }
+
+        /* ── FEATURE BADGES ── */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 10px;
+        }
+
+        .feat {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 14px 10px;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .feat:hover {
+            background: var(--primary-dim);
+            border-color: rgba(255,45,32,0.3);
+            transform: translateY(-2px);
+        }
+
+        .feat i {
+            font-size: 1.4rem;
+            color: var(--primary);
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .feat span {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        /* ── RULES ── */
+        .rule-list { list-style: none; }
+
+        .rule-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--card-border);
+            font-size: 0.88rem;
+            color: var(--text-secondary);
+        }
+
+        .rule-list li:last-child { border-bottom: none; }
+
+        .rule-list li i {
+            color: var(--primary);
+            font-size: 0.75rem;
+            margin-top: 4px;
+            flex-shrink: 0;
+        }
+
+        /* ── BUTTONS ── */
+        .btn {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 13px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 700;
+            font-family: var(--sans);
+            transition: all 0.2s;
+            text-decoration: none;
+            color: #fff;
+            margin-top: 10px;
+        }
+
+        .btn-copy { background: var(--primary); }
+        .btn-copy:hover { background: #d42419; transform: translateY(-1px); }
+
+        .btn-wa { background: var(--wa-color); }
+        .btn-wa:hover { background: #1ebd58; transform: translateY(-1px); }
+
+        /* ── FOOTER ── */
+        footer {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            padding: 20px;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            font-family: var(--mono);
+            border-top: 1px solid var(--card-border);
+        }
+
+        /* ── PLAYER COUNT BAR ── */
+        .player-bar-wrap {
+            margin-top: 10px;
+        }
+
+        .player-bar-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.78rem;
+            font-family: var(--mono);
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .player-bar {
+            height: 6px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .player-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), #ff6b35);
+            border-radius: 10px;
+            transition: width 1s ease;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HERO -->
+    <section class="hero">
+        <div class="logo-wrap">
+            <div class="logo-ring"></div>
+            <img src="https://i.ibb.co.com/HD10HD6J/logo1.png" alt="LaravelMC Logo" class="logo">
+        </div>
+        <h1>Laravel<span>MC</span></h1>
+        <p class="tagline">Minecraft Bedrock Server · Indonesia</p>
+        <div class="version-badge">BEDROCK v1.21.x</div>
+    </section>
+
+    <!-- MAIN CONTENT -->
+    <div class="container">
+
+        <!-- STATUS CARD -->
+        <div class="card">
+            <div class="card-title"><i class="fa-solid fa-circle-dot"></i> Status Server</div>
+            <div class="status-indicator">
+                <div class="status-dot checking" id="statusDot"></div>
+                <div>
+                    <div class="status-text checking" id="statusText">Memeriksa...</div>
+                    <div class="status-sub" id="statusSub">Menghubungi server...</div>
+                </div>
+            </div>
+            <div class="player-bar-wrap" id="playerBarWrap" style="display:none">
+                <div class="player-bar-label">
+                    <span>Pemain Online</span>
+                    <span id="playerCount">0 / 20</span>
+                </div>
+                <div class="player-bar">
+                    <div class="player-bar-fill" id="playerBarFill" style="width:0%"></div>
+                </div>
+            </div>
+            <button class="btn-refresh" id="refreshBtn" onclick="checkStatus()">
+                <i class="fa-solid fa-rotate-right"></i> Refresh
+            </button>
+        </div>
+
+        <!-- SERVER ADDRESS CARD -->
+        <div class="card">
+            <div class="card-title"><i class="fa-solid fa-server"></i> Alamat Server</div>
+            <div class="info-row">
+                <span class="info-label"><i class="fa-solid fa-globe"></i> IP Address</span>
+                <span class="info-value" id="ip-text">laravelmc.zone.id</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label"><i class="fa-solid fa-plug"></i> Port</span>
+                <span class="info-value" id="port-text">58457</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label"><i class="fa-solid fa-gamepad"></i> Platform</span>
+                <span class="info-value">Bedrock Edition</span>
+            </div>
+            <button class="btn btn-copy" onclick="copyServerDetails()">
+                <i class="fa-regular fa-copy"></i> Salin IP & Port
+            </button>
+        </div>
+
+        <!-- FITUR SERVER -->
+        <div class="card card-full">
+            <div class="card-title"><i class="fa-solid fa-star"></i> Fitur Server</div>
+            <div class="features-grid">
+                <div class="feat">
+                    <i class="fa-solid fa-hammer"></i>
+                    <span>Survival</span>
+                </div>
+                <div class="feat">
+                    <i class="fa-solid fa-users"></i>
+                    <span>Multiplayer</span>
+                </div>
+                <div class="feat">
+                    <i class="fa-solid fa-earth-asia"></i>
+                    <span>Open World</span>
+                </div>
+                <div class="feat">
+                    <i class="fa-solid fa-dragon"></i>
+                    <span>Bosses</span>
+                </div>
+                <div class="feat">
+                    <i class="fa-solid fa-shop"></i>
+                    <span>Trading</span>
+                </div>
+                <div class="feat">
+                    <i class="fa-solid fa-house"></i>
+                    <span>Build</span>
+                </div>
+                <div class="feat">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <span>Anti-Grief</span>
+                </div>
+                <div class="feat">
+                    <i class="fa-solid fa-flag"></i>
+                    <span>Claim Land</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- INFO SERVER -->
+        <div class="card">
+            <div class="card-title"><i class="fa-solid fa-circle-info"></i> Info Server</div>
+            <div class="info-row">
+                <span class="info-label"><i class="fa-solid fa-map"></i> Mode</span>
+                <span class="info-value">Survival</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label"><i class="fa-solid fa-fire"></i> Difficulty</span>
+                <span class="info-value">Normal</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label"><i class="fa-solid fa-skull"></i> PvP</span>
+                <span class="info-value">Aktif</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label"><i class="fa-solid fa-language"></i> Bahasa</span>
+                <span class="info-value">Indonesia</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label"><i class="fa-solid fa-clock"></i> Uptime</span>
+                <span class="info-value">24/7</span>
+            </div>
+        </div>
+
+        <!-- RULES CARD -->
+        <div class="card">
+            <div class="card-title"><i class="fa-solid fa-scroll"></i> Aturan Server</div>
+            <ul class="rule-list">
+                <li><i class="fa-solid fa-xmark"></i> Dilarang cheating / hacking</li>
+                <li><i class="fa-solid fa-xmark"></i> Dilarang griefing rumah orang</li>
+                <li><i class="fa-solid fa-xmark"></i> Dilarang spam chat</li>
+                <li><i class="fa-solid fa-xmark"></i> Dilarang kata-kata kasar berlebihan</li>
+                <li><i class="fa-solid fa-check" style="color: var(--online)"></i> Saling menghormati sesama pemain</li>
+                <li><i class="fa-solid fa-check" style="color: var(--online)"></i> Have fun & enjoy!</li>
+            </ul>
+        </div>
+
+        <!-- CARA JOIN -->
+        <div class="card card-full">
+            <div class="card-title"><i class="fa-solid fa-door-open"></i> Cara Join Server</div>
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 4px;">
+                <div style="display:flex; gap:12px; align-items:flex-start;">
+                    <div style="background:var(--primary); color:#fff; width:28px; height:28px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.85rem; flex-shrink:0;">1</div>
+                    <div>
+                        <div style="font-weight:700; font-size:0.9rem;">Buka Minecraft</div>
+                        <div style="color:var(--text-secondary); font-size:0.82rem;">Pastikan versi Bedrock Edition</div>
+                    </div>
+                </div>
+                <div style="display:flex; gap:12px; align-items:flex-start;">
+                    <div style="background:var(--primary); color:#fff; width:28px; height:28px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.85rem; flex-shrink:0;">2</div>
+                    <div>
+                        <div style="font-weight:700; font-size:0.9rem;">Pilih "Play" → "Servers"</div>
+                        <div style="color:var(--text-secondary); font-size:0.82rem;">Scroll ke bawah, klik "Add Server"</div>
+                    </div>
+                </div>
+                <div style="display:flex; gap:12px; align-items:flex-start;">
+                    <div style="background:var(--primary); color:#fff; width:28px; height:28px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.85rem; flex-shrink:0;">3</div>
+                    <div>
+                        <div style="font-weight:700; font-size:0.9rem;">Masukkan IP & Port</div>
+                        <div style="color:var(--text-secondary); font-size:0.82rem;">Salin dari tombol di atas lalu paste</div>
+                    </div>
+                </div>
+                <div style="display:flex; gap:12px; align-items:flex-start;">
+                    <div style="background:var(--primary); color:#fff; width:28px; height:28px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.85rem; flex-shrink:0;">4</div>
+                    <div>
+                        <div style="font-weight:700; font-size:0.9rem;">Klik "Play" & Join!</div>
+                        <div style="color:var(--text-secondary); font-size:0.82rem;">Selamat datang di LaravelMC!</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CTA BUTTONS -->
+        <div class="card card-full" style="padding: 18px;">
+            <a href="https://chat.whatsapp.com/GGQMMB7I763BWPdAKpGIzp" target="_blank" class="btn btn-wa" style="margin-top:0;">
+                <i class="fa-brands fa-whatsapp"></i> Gabung Komunitas WhatsApp
+            </a>
+        </div>
+
+    </div>
+
+    <footer>
+        <p>&copy; 2026 LaravelMC · Made with ❤️ for Indonesian Miners</p>
+    </footer>
+
+    <script>
+        // ── COPY ──
+        function copyServerDetails() {
+            const ip = document.getElementById('ip-text').innerText;
+            const port = document.getElementById('port-text').innerText;
+            navigator.clipboard.writeText(`${ip}:${port}`).then(() => {
+                const btn = document.querySelector('.btn-copy');
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> Berhasil Disalin!';
+                btn.style.background = '#2ecc71';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fa-regular fa-copy"></i> Salin IP & Port';
+                    btn.style.background = '';
+                }, 2000);
+            }).catch(() => alert('Gagal menyalin, coba manual ya!'));
+        }
+
+        // ── STATUS CHECK via mcstatus.io (respects custom port) ──
+        async function checkStatus() {
+            const btn = document.getElementById('refreshBtn');
+            const dot = document.getElementById('statusDot');
+            const text = document.getElementById('statusText');
+            const sub = document.getElementById('statusSub');
+            const playerBarWrap = document.getElementById('playerBarWrap');
+
+            btn.classList.add('spinning');
+            dot.className = 'status-dot checking';
+            text.className = 'status-text checking';
+            text.textContent = 'Memeriksa...';
+            sub.textContent = 'Menghubungi server...';
+
+            const ip = 'laravelmc.zone.id';
+            const port = '58457';
+
+            try {
+                // mcstatus.io properly sends the exact port in the UDP ping
+                const res = await fetch(`https://api.mcstatus.io/v2/status/bedrock/${ip}:${port}`);
+                if (!res.ok) throw new Error('http_error');
+                const data = await res.json();
+
+                // Fallback: jika ip_address ada & eula_blocked false = server reachable
+                const isOnline = data.online || (data.ip_address && !data.eula_blocked);
+
+                if (isOnline) {
+                    dot.className = 'status-dot online';
+                    text.className = 'status-text online';
+                    text.textContent = '🟢 Online';
+
+                    sub.textContent = `Terakhir dicek: ${new Date().toLocaleTimeString('id-ID')}`;
+                    playerBarWrap.style.display = 'none';
+                } else {
+                    throw new Error('offline');
+                }
+            } catch (e) {
+                dot.className = 'status-dot offline';
+                text.className = 'status-text offline';
+                text.textContent = '🔴 Offline';
+                sub.textContent = `Server tidak dapat dijangkau · ${new Date().toLocaleTimeString('id-ID')}`;
+                playerBarWrap.style.display = 'none';
+            }
+
+            btn.classList.remove('spinning');
+        }
+
+        // Auto-check on load
+        checkStatus();
+        // Auto-refresh every 60s
+        setInterval(checkStatus, 60000);
+    </script>
+</body>
+</html>
